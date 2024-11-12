@@ -12,13 +12,11 @@ import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Random;
+import java.nio.file.Files;
 
-public class CreateUserPostCall {
+public class CreateUserWithJsonTest {
     static String emailId;
     Playwright playwright;
     APIRequest request;
@@ -38,21 +36,21 @@ public class CreateUserPostCall {
 
     public static String getRandomEmail(){
         emailId = "testemail"+System.currentTimeMillis()+"@gmail.com";
-       return emailId;
+        return emailId;
     }
 
     @Test
     public void createUserTest() throws IOException {
-        Map<String, Object> data = new HashMap<>();
-        data.put("name", "Sakshi Aggarwal");
-        data.put("email", getRandomEmail());
-        data.put("gender", "female");
-        data.put("status", "active");
+//get json file:
+        byte[] fileBytes = null;
+        File file = new File("C:\\Users\\DELL\\Sakshi\\PlaywrightAPI\\src\\test\\java\\data\\user.json");
+        fileBytes = Files.readAllBytes(file.toPath());
+        // this will read the file in bytes format and we can later supply it as json in setData as it can access byte[]
         APIResponse response = requestContext.post("https://gorest.co.in/public/v2/users",
                 RequestOptions.create()
                         .setHeader("Content-Type", "application/json")
                         .setHeader("Authorization", "Bearer bfe4e8fa723f803937107077237755584d0d50fa1e214ca1ae0d85497118f70c")
-                        .setData(data));
+                        .setData(fileBytes));
         System.out.println("response status : " + response.status());
         Assert.assertEquals(response.status(), 201);
         Assert.assertEquals(response.statusText(), "Created");
@@ -76,8 +74,8 @@ public class CreateUserPostCall {
         Assert.assertEquals(getResponse.statusText(), "OK");
 
         System.out.println(getResponse.text());
-        Assert.assertTrue(getResponse.text().contains("Sakshi Aggarwal"));
-        Assert.assertTrue(getResponse.text().contains(emailId));
+        Assert.assertTrue(getResponse.text().contains("Millie"));
+//        Assert.assertTrue(getResponse.text().contains(emailId));
 
 
     }
