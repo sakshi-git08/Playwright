@@ -15,14 +15,11 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-public class UpdateUserPutCall {
-    //1. post: user id - 123
+public class DeleteUserTest {
+    //1. create user id - Post - 201
+    //2. delete user id = delete - 204
+    //3. read user id - get - 404
 
-    //2. put: user id - /123
-
-    //3. get: user id - /123
-
-    //post call: create a user
     static String emailId;
     Playwright playwright;
     APIRequest request;
@@ -46,7 +43,7 @@ public class UpdateUserPutCall {
     }
 
     @Test
-    public void createUserTest() throws IOException {
+    public void deleteUserTest() throws IOException {
         Users users = Users.builder()
                 .name("Sakshi")
                 .email(getRandomEmail())
@@ -69,61 +66,30 @@ public class UpdateUserPutCall {
         ObjectMapper mapper = new ObjectMapper();
         UserResponseDTO actualUser = mapper.readValue(responseText, UserResponseDTO.class);
         System.out.println(actualUser.getEmail());
-        Assert.assertEquals(actualUser.getEmail(), users.getEmail());
-        Assert.assertEquals(actualUser.getName(), users.getName());
-        Assert.assertEquals(actualUser.getStatus(), users.getStatus());
-        Assert.assertEquals(actualUser.getGender(), users.getGender());
         Assert.assertNotNull(actualUser.getId());
-
         int userId = actualUser.getId();
         System.out.println("new user id is : " + userId);
 
-        //update active to inactive
-        users.setStatus("inactive");
-        users.setName("Sakshi Testing");
-
-        System.out.println("----------------PUT Call---------------------");
-
-        //2. Put call - update user
-        APIResponse apiPutResponse = requestContext.put("https://gorest.co.in/public/v2/users/" + userId,
+        //delete call
+        APIResponse apiDeleteResponse = requestContext.delete("https://gorest.co.in/public/v2/users/" + userId,
                 RequestOptions.create()
-                        .setHeader("Content-Type", "application/json")
-                        .setHeader("Authorization", "Bearer bfe4e8fa723f803937107077237755584d0d50fa1e214ca1ae0d85497118f70c")
-                        .setData(users));
+                        .setHeader("Authorization", "Bearer bfe4e8fa723f803937107077237755584d0d50fa1e214ca1ae0d85497118f70c"));
+        System.out.println(apiDeleteResponse.status());
+        System.out.println(apiDeleteResponse.statusText());
+        Assert.assertEquals(apiDeleteResponse.status(), 204);
 
-        System.out.println(apiPutResponse.status() + " : " + apiPutResponse.statusText());
-        Assert.assertEquals(apiPutResponse.status(), 200);
+        System.out.println("Delete User Response body -> " + apiDeleteResponse.text());
 
-        String putResponseText = apiPutResponse.text();
-        System.out.println("updated user :  " + putResponseText);
-        UserResponseDTO actualPutUser = mapper.readValue(putResponseText, UserResponseDTO.class);
-        Assert.assertEquals(actualPutUser.getId(), userId);
-        Assert.assertEquals(actualPutUser.getStatus(), users.getStatus());
-        Assert.assertEquals(actualPutUser.getName(), users.getName());
-
-        //3. Get the updated user with get call
-        APIResponse apiGetResponse = requestContext.get("https://gorest.co.in/public/v2/users/" + userId,
+        //3. Get call
+        APIResponse apiGetResponse = requestContext.get("https://gorest.co.in/public/v2/users/"+userId,
                 RequestOptions.create()
                         .setHeader("Authorization", "Bearer bfe4e8fa723f803937107077237755584d0d50fa1e214ca1ae0d85497118f70c"));
         int statusCode = apiGetResponse.status();
         System.out.println("API Response status code : " + statusCode);
-        Assert.assertEquals(statusCode, 200);
-        Assert.assertEquals(apiGetResponse.ok(), true);
-
-        String statusText = apiGetResponse.statusText();
-        System.out.println("API Response status text : " + statusText);
-        Assert.assertEquals(statusText, "OK");
-
-        System.out.println("--------print api plain text -------------");
-        System.out.println(apiGetResponse.text());
-        String apiGetResponseText = apiGetResponse.text();
-
-        UserResponseDTO actualGetUser = mapper.readValue(apiGetResponseText, UserResponseDTO.class);
-        Assert.assertEquals(actualGetUser.getId(), userId);
-        Assert.assertEquals(actualGetUser.getStatus(), users.getStatus());
-        Assert.assertEquals(actualGetUser.getName(), users.getName());
-
+        Assert.assertEquals(statusCode, 404);
+//        Assert.assertEquals(apiGetResponse.ok(), true);
+        Assert.assertEquals(apiGetResponse.statusText(), "Not Found");
+        Assert.assertTrue(apiGetResponse.text().contains("Resource not found"));
     }
-
 
 }
